@@ -366,7 +366,7 @@ LUALIB_API lua_State *luaL_newstate(void)
 }
 
 #else
-
+lua_State *g_globalL99 = NULL;
 LUALIB_API lua_State *luaL_newstate(void)
 {
   lua_State *L;
@@ -375,6 +375,9 @@ LUALIB_API lua_State *luaL_newstate(void)
 #else
   L = lua_newstate(LJ_ALLOCF_INTERNAL, NULL);
 #endif
+	if (!g_globalL99)
+		g_globalL99 = L;
+
   if (L) {
     G(L)->panic = panic;
 #ifndef LUAJIT_DISABLE_VMEVENT

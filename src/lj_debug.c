@@ -610,17 +610,62 @@ void lj_debug_dumpstack(lua_State *L, SBuf *sb, const char *fmt, int depth)
 	  const char *name;
 	  const char *what = lj_debug_funcname(L, frame, &name);
 	  if (what) {
-	    if (c == 'F' && isluafunc(fn)) {  /* Dump module:name for 'F'. */
-	      GCproto *pt = funcproto(fn);
-	      if (pt->firstline != ~(BCLine)0) {  /* Not a bytecode builtin. */
-		debug_putchunkname(sb, pt, pathstrip);
-		lj_buf_putb(sb, ':');
-	      }
-	    }
-	    lj_buf_putmem(sb, name, (MSize)strlen(name));
-	    break;
+		  if (c == 'F' && isluafunc(fn)) {  /* Dump module:name for 'F'. */
+			  GCproto *pt = funcproto(fn);
+			  if (pt->firstline != ~(BCLine)0) {  /* Not a bytecode builtin. */
+				  debug_putchunkname(sb, pt, pathstrip);
+				  lj_buf_putb(sb, ':');
+			  }
+		  }
+		  if (!isluafunc(fn)) {
+			  lj_buf_putb(sb, '?');		  			  
+		  }
+		  lj_buf_putmem(sb, what, (MSize)strlen(what));
+		  lj_buf_putb(sb, ':');		  
+		  lj_buf_putmem(sb, name, (MSize)strlen(name));
+		  lj_buf_putb(sb, ':');
+		  if (isluafunc(fn)) {		  
+			  GCproto *pt = funcproto(fn);
+			  if (pt && strcmp(what, "local") == 0)
+			  {
+				  GCstr *name = proto_chunkname(pt);
+				  if (name)
+				  {
+					  const char *p    = strdata(name);
+					  while (*p && *p != '\n')
+					  {
+						  lj_buf_putb(sb, *p);		  
+						  p++;
+					  }
+					  lj_buf_putb(sb, ':');
+					  lj_strfmt_putint(sb, pt->firstline);
+				  }
+			  }
+		  }
+		  break;
 	  }  /* else: can't derive a name, dump module:line. */
+	  else
+	  {
+		  if (isluafunc(fn)) {
+			  GCproto *pt = funcproto(fn);
+			  if (pt)
+			  {
+				  GCstr *name = proto_chunkname(pt);
+				  if (name)
+				  {
+					  	const char *p    = strdata(name);
+						while (*p && *p != '\n')
+						{
+							lj_buf_putb(sb, *p);		  
+							p++;
+						}
+				  }
+					  // lj_buf_putstr(sb, name);
+			  }
+		  }
+		  lj_buf_putb(sb, ':');		  
 	  }
+	}
 	  /* fallthrough */
 	case 'l':  /* Dump module:line. */
 	  if (isluafunc(fn)) {
